@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Watcher · Market</title>
+  <meta name="description" content="A report on the job postings history, computed in the browser.">
+  <meta name="theme-color" content="#2a78d6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav"><div class="nav-inner">
+    <a class="brand" href="index.html"><img src="icons/icon-192.png" alt="">Job Watcher</a>
+    <div class="nav-links">
+      <a href="index.html">Today</a>
+      <a href="browse.html">Browse</a>
+      <a href="market.html" aria-current="page">Market</a>
+    </div>
+    <span class="offline-pill">Offline · showing saved data</span>
+  </div></nav>
+
+  <main id="app">
+    <div class="page-head">
+      <h1>Market report</h1>
+      <p class="muted" id="intro">Computing from the history file…</p>
+    </div>
+  </main>
+  <footer>Every number on this page is computed in your browser from data/history.csv. “First-run” postings were already open when the tool started watching their source, so their start date is unknown; they are left out where noted.</footer>
+
+  <script src="common.js"></script>
+  <script>
+  (async () => {
+    const app = document.getElementById("app");
+    let rows;
+    try { rows = await JW.loadHistory(); } catch (e) { return JW.showError(app, e); }
+    if (!rows.length) { document.getElementById("intro").textContent = "The history file is empty."; return; }
+
+    const { fmt, pct, esc, shortDate } = JW;
+    const lastRun = JW.lastRunDate(rows);
+    const firstDate = rows.reduce((m, r) => (r.first_seen < m ? r.first_seen : m), lastRun);
+    const days = JW.dateRange(firstDate, lastRun);
+    const notFirstRun = rows.filter(r => !r.first_run);
+    const open = rows.filter(r => r.status === "open");
+    document.getElementById("intro").textContent =
+      `${fmt(rows.length)} postings tracked from ${firstDate} to ${lastRun} (${days.length} day${days.length === 1 ? "" : "s"}), ` +
+      `${fmt(rows.filter(r => r.in_role).length)} of them in credit analyst roles.`;
+
+    function section(n, heading, paragraph, inner) {
+      app.insertAdjacentHTML("beforeend",
+        `<section class="card" id="s${n}"><h2><span class="section-num">${n}</span>${heading}</h2><p>${paragraph}</p>${inner}</section>`);
+      return document.getElementById("s" + n);
+    }
+    const countBy = (list, key) => {
+      const m = new Map();
+      list.forEach(r => m.set(key(r), (m.get(key(r)) || 0) + 1));
+      return m;
+    };
+
+    // 1. New postings per day (first_seen, excluding first-run), all vs credit roles
+    {
+      const all = countBy(notFirstRun, r => r.first_seen);
+      const role = countBy(notFirstRun.filter(r => r.in_role), r => r.first_seen);
+      const later = days.slice(1);  // the first day is the baseline: every posting on it is first-run
+      const total = later.reduce((s, d) => s + (all.get(d) || 0), 0);
+      const totalRole = later.reduce((s, d) => s + (role.get(d) || 0), 0);
+      const heading = later.length
+        ? `About ${fmt(Math.round(total / later.length))} new postings appear per day, ${fmt(Math.round((totalRole / later.length) * 10) / 10)} of them in credit roles`
+        : `No new postings yet: the first run set the baseline`;
+      const para = later.length
+        ? `Since the first run, the employers posted ${fmt(total)} new jobs over ${later.length} day${later.length === 1 ? "" : "s"}; ${fmt(totalRole)} matched the credit analyst title rule. Postings already open on the day a source was first read are not counted as new, so the first day is zero by definition.`
+        : `Every posting seen on ${firstDate} was already open when the tool started watching, so it counts as a first-run posting rather than a new one. New postings will appear here from the next run.`;
+      const el = section(1, heading, para,
+        `<div class="multiples">
+           <div><h3>All postings</h3><div class="chart" id="c1a"></div></div>
+           <div><h3>Credit analyst roles</h3><div class="chart" id="c1b"></div></div>
+         </div>` +
+        JW.tableView(days.map(d => [d, all.get(d) || 0, role.get(d) || 0]), ["Date", "New (all)", "New (credit roles)"]));
+      JW.columnChart(el.querySelector("#c1a"), days.map(d => ({ label: d, short: shortDate(d), value: all.get(d) || 0, tip: `${d}: ${fmt(all.get(d) || 0)} new` })), { cls: "s1", valueLabel: "New postings per day, all" });
+      JW.columnChart(el.querySelector("#c1b"), days.map(d => ({ label: d, short: shortDate(d), value: role.get(d) || 0, tip: `${d}: ${fmt(role.get(d) || 0)} new credit roles` })), { cls: "s2", valueLabel: "New postings per day, credit roles" });
+    }
+
+    // 2. Removed postings per day (removed_date)
+    {
+      const rem = countBy(rows.filter(r => r.removed_date), r => r.removed_date);
+      const total = [...rem.values()].reduce((a, b) => a + b, 0);
+      let peak = null;
+      rem.forEach((v, d) => { if (!peak || v > peak[1]) peak = [d, v]; });
+      const heading = total
+        ? `${fmt(total)} postings have been taken down, most on ${peak[0]} (${fmt(peak[1])})`
+        : `No postings have been removed yet`;
+      const para = total
+        ? `A posting counts as removed on the first day its source was read successfully and no longer listed it. Removals include filled roles and roles an employer withdrew; a posting that comes back is reopened and leaves this count.`
+        : `A posting is marked removed on the first day its source is read successfully and no longer lists it. With only ${days.length} day${days.length === 1 ? "" : "s"} of history, nothing has disappeared yet.`;
+      const el = section(2, heading, para, `<div class="chart" id="c2"></div>` +
+        JW.tableView(days.map(d => [d, rem.get(d) || 0]), ["Date", "Removed"]));
+      JW.columnChart(el.querySelector("#c2"), days.map(d => ({ label: d, short: shortDate(d), value: rem.get(d) || 0, tip: `${d}: ${fmt(rem.get(d) || 0)} removed` })), { cls: "s1", valueLabel: "Removed postings per day" });
+    }
+
+    // 3. Open postings per employer as of the last run
+    {
+      const by = [...countBy(open, r => r.employer)].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      const roleBy = countBy(open.filter(r => r.in_role), r => r.employer);
+      const topRole = [...roleBy].sort((a, b) => b[1] - a[1])[0];
+      const heading = by.length ? `${esc(by[0][0])} has the most open postings, with ${fmt(by[0][1])}` : `No open postings`;
+      const para = `As of the last run on ${lastRun}, ${fmt(open.length)} postings are open across ${by.length} employers. ` +
+        (topRole ? `For credit analyst roles specifically, ${esc(topRole[0])} leads with ${fmt(topRole[1])} open.` : `None of the open postings match the credit analyst rule.`);
+      const el = section(3, heading, para, `<div class="chart" id="c3"></div>` +
+        JW.tableView(by.map(([e, n]) => [e, n, roleBy.get(e) || 0]), ["Employer", "Open (all)", "Open (credit roles)"]));
+      JW.barChart(el.querySelector("#c3"), by.map(([label, value]) => ({ label, value })), { valueLabel: "Open postings per employer" });
+    }
+
+    // 4. Days open: removed, not first-run: removed_date - first_seen; report the median
+    {
+      const spans = notFirstRun.filter(r => r.status === "removed" && r.removed_date).map(r => JW.daysBetween(r.first_seen, r.removed_date));
+      const med = JW.median(spans);
+      const heading = spans.length
+        ? `The median posting stays up ${fmt(med)} day${med === 1 ? "" : "s"}`
+        : `No days-open figure yet`;
+      const para = spans.length
+        ? `For the ${fmt(spans.length)} removed postings whose first day the tool saw (first-run postings excluded), days open is the removed date minus the first-seen date. The median is ${fmt(med)} day${med === 1 ? "" : "s"}; the chart shows how those durations are spread.`
+        : `Days open needs postings that the tool saw appear and then disappear. First-run postings are excluded because their start date is unknown, so this fills in once new postings start being removed.`;
+      const hist = new Map();
+      spans.forEach(s => hist.set(s, (hist.get(s) || 0) + 1));
+      const maxSpan = spans.length ? Math.max(...spans) : 0;
+      const buckets = Array.from({ length: maxSpan + 1 }, (_, k) => k);
+      const el = section(4, heading, para,
+        `<div class="hero">${med === null ? "—" : fmt(med) + " days"}</div><p class="small muted">median days open</p><div class="chart" id="c4"></div>` +
+        JW.tableView(buckets.map(k => [k + (k === 1 ? " day" : " days"), hist.get(k) || 0]), ["Days open", "Removed postings"]));
+      if (spans.length) JW.columnChart(el.querySelector("#c4"), buckets.map(k => ({ label: `${k} days`, short: String(k), value: hist.get(k) || 0, tip: `${k} day${k === 1 ? "" : "s"} open: ${fmt(hist.get(k) || 0)} postings` })), { valueLabel: "Removed postings by days open" });
+      else el.querySelector("#c4").innerHTML = `<p class="empty">The chart appears once the first non-first-run posting is removed.</p>`;
+    }
+
+    // 5. Share removed within seven days
+    {
+      const cutoff = JW.addDays(lastRun, -7);
+      const eligible = notFirstRun.filter(r => r.first_seen <= cutoff);
+      const quick = eligible.filter(r => r.removed_date && JW.daysBetween(r.first_seen, r.removed_date) <= 7);
+      const share = eligible.length ? quick.length / eligible.length : null;
+      const heading = share === null
+        ? `Too early to tell how many postings close within a week`
+        : `${pct(share)} of postings are taken down within seven days`;
+      const para = share === null
+        ? `This counts postings that are not first-run and were first seen on or before ${cutoff} (at least seven days before the last run), so each has had a full week to close. None qualify yet; the first ones will on ${JW.addDays(firstDate, 8)}.`
+        : `Of the ${fmt(eligible.length)} postings first seen on or before ${cutoff} (at least seven days before the last run, first-run postings excluded), ${fmt(quick.length)} were removed seven days or less after they were first seen.`;
+      const el = section(5, heading, para,
+        `<div class="hero">${share === null ? "—" : pct(share)}</div><p class="small muted">removed within 7 days</p>` +
+        `<div class="legend"><span style="--c:var(--series-2)">Removed within 7 days</span><span style="--c:var(--series-1)">Still open or removed later</span></div><div class="chart" id="c5"></div>` +
+        JW.tableView([["Eligible postings", eligible.length], ["Removed within 7 days", quick.length], ["Still open or removed later", eligible.length - quick.length]], ["Group", "Postings"]));
+      const c = el.querySelector("#c5");
+      if (eligible.length) {
+        const W = Math.max(260, c.clientWidth || 640), H = 34, w1 = (quick.length / eligible.length) * W, gap = quick.length && quick.length < eligible.length ? 2 : 0;
+        c.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Share removed within seven days">
+          ${quick.length ? `<rect class="bar s2" x="0" y="4" width="${Math.max(0, w1 - gap / 2)}" height="26" rx="4" tabindex="0" data-tip="Removed within 7 days: ${fmt(quick.length)}"/>` : ""}
+          ${quick.length < eligible.length ? `<rect class="bar s1" x="${w1 + gap / 2}" y="4" width="${Math.max(0, W - w1 - gap / 2)}" height="26" rx="4" tabindex="0" data-tip="Still open or removed later: ${fmt(eligible.length - quick.length)}"/>` : ""}
+        </svg>`;
+        JW.attachTooltip(c);
+      } else c.innerHTML = `<p class="empty">Not enough history yet.</p>`;
+    }
+
+    // 6. Top locations among open postings
+    {
+      const top = [...countBy(open.filter(r => r.location), r => r.location)].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 15);
+      const blank = open.filter(r => !r.location).length;
+      const heading = top.length ? `${esc(top[0][0])} is the top location, with ${fmt(top[0][1])} open postings` : `No locations to report`;
+      const para = `The fifteen most common locations among the ${fmt(open.length)} open postings, using the location text each employer's board gives. Together they account for ${fmt(top.reduce((s, x) => s + x[1], 0))} postings` +
+        (blank ? `; ${fmt(blank)} postings list no location.` : ".") + ` Workday boards show “2 Locations” for jobs posted in several places.`;
+      const el = section(6, heading, para, `<div class="chart" id="c6"></div>` + JW.tableView(top, ["Location", "Open postings"]));
+      JW.barChart(el.querySelector("#c6"), top.map(([label, value]) => ({ label, value })), { valueLabel: "Top locations among open postings" });
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,1 +1,89 @@
-<!doctype html><meta charset="utf-8"><title>Job Watcher</title><p>Job Watcher site coming soon.</p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Watcher · Today</title>
+  <meta name="description" content="Daily watch of credit analyst job postings at 26 employers.">
+  <meta name="theme-color" content="#2a78d6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav"><div class="nav-inner">
+    <a class="brand" href="index.html"><img src="icons/icon-192.png" alt="">Job Watcher</a>
+    <div class="nav-links">
+      <a href="index.html" aria-current="page">Today</a>
+      <a href="browse.html">Browse</a>
+      <a href="market.html">Market</a>
+    </div>
+    <span class="offline-pill">Offline · showing saved data</span>
+  </div></nav>
+
+  <main id="app">
+    <div class="page-head">
+      <h1>Today</h1>
+      <p class="muted" id="run-time">Loading the latest run…</p>
+    </div>
+  </main>
+  <footer>Credit analyst roles across 26 employer job boards, refreshed daily by GitHub Actions.</footer>
+
+  <script src="common.js"></script>
+  <script>
+  (async () => {
+    const app = document.getElementById("app");
+    let status, rows;
+    try { [status, rows] = await Promise.all([JW.loadStatus(), JW.loadHistory()]); }
+    catch (e) { return JW.showError(app, e); }
+
+    const date = status.run_date || status.run_time.slice(0, 10);
+    const newRows = rows.filter(r => r.first_seen === date && !r.first_run);
+    const removed = rows.filter(r => r.removed_date === date);
+    const order = (a, b) => (b.in_role - a.in_role) || a.employer.localeCompare(b.employer) || a.title.localeCompare(b.title);
+    newRows.sort(order); removed.sort(order);
+    const okCount = status.sources.filter(s => s.ok).length;
+
+    const list = (items, emptyText) => items.length
+      ? `<ul class="postings scroll-list">${items.map(r => JW.postingItem(r)).join("")}</ul>`
+      : `<p class="empty">${emptyText}</p>`;
+    const roleCount = items => items.filter(r => r.in_role).length;
+
+    document.getElementById("run-time").textContent = "Last run: " + JW.fmtTime(status.run_time);
+    app.insertAdjacentHTML("beforeend", `
+      <section class="tiles" aria-label="Counts">
+        <div class="tile"><div class="label">Days with a successful run</div><div class="value">${JW.fmt(status.days_with_success)}</div><div class="small muted">since ${JW.esc(status.first_run_date)}</div></div>
+        <div class="tile"><div class="label">Open postings</div><div class="value">${JW.fmt(status.open)}</div><div class="small muted">${JW.fmt(rows.filter(r => r.status === "open" && r.in_role).length)} in credit roles</div></div>
+        <div class="tile"><div class="label">New today</div><div class="value">${JW.fmt(status.new_today)}</div><div class="small muted">${JW.fmt(roleCount(newRows))} in credit roles</div></div>
+        <div class="tile"><div class="label">Removed today</div><div class="value">${JW.fmt(status.removed_today)}</div><div class="small muted">${JW.fmt(roleCount(removed))} in credit roles</div></div>
+      </section>
+
+      <section class="two-col">
+        <div class="card">
+          <h2>New postings (${JW.fmt(newRows.length)})</h2>
+          <p class="small muted">First seen on ${JW.esc(date)}. Postings that were already open when a source was first watched are not counted as new.</p>
+          ${list(newRows, "No new postings in the latest run.")}
+        </div>
+        <div class="card">
+          <h2>Removed postings (${JW.fmt(removed.length)})</h2>
+          <p class="small muted">Listed by their source before, missing on ${JW.esc(date)}.</p>
+          ${list(removed, "No postings were removed in the latest run.")}
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Sources (${okCount} of ${status.sources.length} OK)</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Employer</th><th>System</th><th>Status</th><th class="num">Postings</th></tr></thead>
+          <tbody>${status.sources.map(s => `<tr>
+            <td>${JW.esc(s.employer || s.name)}</td>
+            <td>${JW.esc(s.ats || "")}</td>
+            <td>${s.ok ? '<span class="status-ok">✓ OK</span>' : `<span class="status-bad">✕ Failed</span> <span class="small muted">${JW.esc(s.error || "")}</span>`}</td>
+            <td class="num">${s.ok ? JW.fmt(s.count) : "—"}</td></tr>`).join("")}</tbody>
+        </table></div>
+      </section>`);
+  })();
+  </script>
+</body>
+</html>

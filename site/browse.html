@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Watcher · Browse</title>
+  <meta name="description" content="Browse open postings, filter, and keep a shortlist.">
+  <meta name="theme-color" content="#2a78d6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav"><div class="nav-inner">
+    <a class="brand" href="index.html"><img src="icons/icon-192.png" alt="">Job Watcher</a>
+    <div class="nav-links">
+      <a href="index.html">Today</a>
+      <a href="browse.html" aria-current="page">Browse</a>
+      <a href="market.html">Market</a>
+    </div>
+    <span class="offline-pill">Offline · showing saved data</span>
+  </div></nav>
+
+  <main id="app">
+    <div class="page-head">
+      <h1>Browse open postings</h1>
+      <p class="muted">Star a posting to keep it on your shortlist. The shortlist is saved in this browser.</p>
+    </div>
+
+    <section class="card">
+      <div class="controls">
+        <div class="control">
+          <span>Show</span>
+          <div class="segmented" role="group" aria-label="Role">
+            <button type="button" data-mode="role" aria-pressed="true">Credit analyst roles</button>
+            <button type="button" data-mode="all" aria-pressed="false">All postings</button>
+            <button type="button" data-mode="star" aria-pressed="false">★ Shortlist <span id="star-count"></span></button>
+          </div>
+        </div>
+        <label class="control grow"><span>Search titles</span><input type="search" id="q" placeholder="e.g. underwriter, commercial, senior"></label>
+      </div>
+      <div class="controls">
+        <label class="control"><span>Employer</span><select id="employer"><option value="">All employers</option></select></label>
+        <label class="control"><span>Location</span><select id="location"><option value="">All locations</option></select></label>
+        <label class="control"><span>Days open</span>
+          <select id="days">
+            <option value="">Any</option>
+            <option value="0-1">1 day or less</option>
+            <option value="0-7">7 days or less</option>
+            <option value="0-30">30 days or less</option>
+            <option value="31-">More than 30 days</option>
+          </select>
+        </label>
+        <label class="control"><span>Sort by first seen</span>
+          <select id="sort">
+            <option value="new">Newest first</option>
+            <option value="old">Oldest first</option>
+          </select>
+        </label>
+        <button type="button" class="btn" id="reset">Reset filters</button>
+      </div>
+      <div class="result-count" id="count"></div>
+      <ul class="postings" id="list"></ul>
+      <div style="text-align:center;margin-top:10px"><button type="button" class="btn" id="more" hidden>Show more</button></div>
+    </section>
+  </main>
+  <footer>Days open is counted from the first day the tool saw a posting. For postings already open when a source was first watched, it is a minimum (shown as ≥).</footer>
+
+  <script src="common.js"></script>
+  <script>
+  (async () => {
+    const app = document.getElementById("app");
+    let rows;
+    try { rows = await JW.loadHistory(); } catch (e) { return JW.showError(app, e); }
+    const lastRun = JW.lastRunDate(rows);
+
+    // ---- shortlist in localStorage (works without it, e.g. in private windows) ----
+    const KEY = "jobwatcher.shortlist";
+    let stars = new Set();
+    try { stars = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) {}
+    const saveStars = () => { try { localStorage.setItem(KEY, JSON.stringify([...stars])); } catch (e) {} };
+
+    const $ = id => document.getElementById(id);
+    const state = { mode: "role", q: "", employer: "", location: "", days: "", sort: "new", shown: 100 };
+    rows.forEach(r => { r.daysOpen = JW.daysBetween(r.first_seen, lastRun); });
+
+    const base = () => state.mode === "star" ? rows.filter(r => stars.has(r.posting_id))
+      : rows.filter(r => r.status === "open" && (state.mode === "all" || r.in_role));
+
+    function fillSelect(sel, values, label) {
+      const counts = new Map();
+      values.forEach(v => { if (v) counts.set(v, (counts.get(v) || 0) + 1); });
+      const current = sel.value;
+      const opts = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      sel.innerHTML = `<option value="">${label}</option>` + opts.map(([v, n]) => `<option value="${JW.esc(v)}">${JW.esc(v)} (${JW.fmt(n)})</option>`).join("");
+      sel.value = counts.has(current) ? current : "";
+      if (sel.value !== current) state[sel.id] = "";
+    }
+
+    function render() {
+      const b = base();
+      fillSelect($("employer"), b.map(r => r.employer), "All employers");
+      fillSelect($("location"), b.filter(r => !state.employer || r.employer === state.employer).map(r => r.location), "All locations");
+      const q = state.q.trim().toLowerCase();
+      let [lo, hi] = state.days ? state.days.split("-").map(x => (x === "" ? Infinity : +x)) : [0, Infinity];
+      const list = b.filter(r =>
+        (!state.employer || r.employer === state.employer) &&
+        (!state.location || r.location === state.location) &&
+        (!q || r.title.toLowerCase().includes(q)) &&
+        (!state.days || (r.daysOpen >= lo && r.daysOpen <= hi)));
+      list.sort((a, c) => (state.sort === "new" ? c.first_seen.localeCompare(a.first_seen) : a.first_seen.localeCompare(c.first_seen))
+        || a.employer.localeCompare(c.employer) || a.title.localeCompare(c.title));
+
+      $("star-count").textContent = stars.size ? `(${stars.size})` : "";
+      $("count").textContent = `${JW.fmt(list.length)} posting${list.length === 1 ? "" : "s"}` +
+        (state.mode === "role" ? " in credit analyst roles" : state.mode === "star" ? " on your shortlist" : " open");
+      const shown = list.slice(0, state.shown);
+      $("list").innerHTML = shown.length ? shown.map(r => {
+        const on = stars.has(r.posting_id);
+        const days = (r.first_run ? "≥" : "") + JW.fmt(r.daysOpen) + (r.daysOpen === 1 ? " day" : " days");
+        const removed = r.status === "removed" ? ` · <strong>removed ${JW.esc(r.removed_date)}</strong>` : "";
+        return `<li>
+          <button type="button" class="star" aria-pressed="${on}" aria-label="${on ? "Remove from" : "Add to"} shortlist" data-id="${JW.esc(r.posting_id)}">${on ? "★" : "☆"}</button>
+          <div class="p-main"><a class="p-title" href="${JW.esc(JW.safeUrl(r.url))}" target="_blank" rel="noopener">${JW.esc(r.title)}</a>${r.in_role ? '<span class="badge">Credit role</span>' : ""}
+            <div class="p-meta">${JW.esc(r.employer)}${r.location ? " · " + JW.esc(r.location) : ""} · first seen ${JW.esc(r.first_seen)} · open ${days}${removed}</div></div>
+          <a class="apply" href="${JW.esc(JW.safeUrl(r.url))}" target="_blank" rel="noopener">Apply ↗</a>
+        </li>`;
+      }).join("") : `<li class="empty">${state.mode === "star" ? "Your shortlist is empty. Star postings to add them." : "No postings match these filters."}</li>`;
+      $("more").hidden = list.length <= state.shown;
+    }
+
+    document.querySelectorAll("[data-mode]").forEach(btn => btn.addEventListener("click", () => {
+      state.mode = btn.dataset.mode; state.shown = 100;
+      document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b === btn));
+      render();
+    }));
+    $("q").addEventListener("input", e => { state.q = e.target.value; state.shown = 100; render(); });
+    ["employer", "location", "days", "sort"].forEach(id => $(id).addEventListener("change", e => { state[id] = e.target.value; state.shown = 100; render(); }));
+    $("reset").addEventListener("click", () => {
+      Object.assign(state, { q: "", employer: "", location: "", days: "", sort: "new", shown: 100 });
+      $("q").value = ""; $("days").value = ""; $("sort").value = "new"; $("employer").value = ""; $("location").value = "";
+      render();
+    });
+    $("more").addEventListener("click", () => { state.shown += 100; render(); });
+    $("list").addEventListener("click", e => {
+      const btn = e.target.closest(".star");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      stars.has(id) ? stars.delete(id) : stars.add(id);
+      saveStars();
+      render();
+    });
+    render();
+  })();
+  </script>
+</body>
+</html>
