@@ -1,0 +1,219 @@
+{
+  "run_time": "2026-11-25T20:19:11Z",
+  "run_date": "2026-11-25",
+  "first_run_date": "2026-11-25",
+  "days_with_success": 1,
+  "open": 3232,
+  "new_today": 0,
+  "removed_today": 0,
+  "sources": [
+    {
+      "name": "affirm",
+      "employer": "Affirm",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 215,
+      "error": ""
+    },
+    {
+      "name": "block",
+      "employer": "Block",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 186,
+      "error": ""
+    },
+    {
+      "name": "brex",
+      "employer": "Brex",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 264,
+      "error": ""
+    },
+    {
+      "name": "chime",
+      "employer": "Chime",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 78,
+      "error": ""
+    },
+    {
+      "name": "coinbase",
+      "employer": "Coinbase",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 245,
+      "error": ""
+    },
+    {
+      "name": "enova",
+      "employer": "Enova",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 35,
+      "error": ""
+    },
+    {
+      "name": "figure",
+      "employer": "Figure",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 31,
+      "error": ""
+    },
+    {
+      "name": "mercury",
+      "employer": "Mercury",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 68,
+      "error": ""
+    },
+    {
+      "name": "oportun",
+      "employer": "Oportun",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 38,
+      "error": ""
+    },
+    {
+      "name": "robinhood",
+      "employer": "Robinhood",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 161,
+      "error": ""
+    },
+    {
+      "name": "sezzle",
+      "employer": "Sezzle",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 220,
+      "error": ""
+    },
+    {
+      "name": "sofi",
+      "employer": "SoFi",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 57,
+      "error": ""
+    },
+    {
+      "name": "stripe",
+      "employer": "Stripe",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 772,
+      "error": ""
+    },
+    {
+      "name": "upstart",
+      "employer": "Upstart",
+      "ats": "greenhouse",
+      "ok": true,
+      "count": 75,
+      "error": ""
+    },
+    {
+      "name": "ramp",
+      "employer": "Ramp",
+      "ats": "ashby",
+      "ok": true,
+      "count": 182,
+      "error": ""
+    },
+    {
+      "name": "plaid",
+      "employer": "Plaid",
+      "ats": "ashby",
+      "ok": true,
+      "count": 144,
+      "error": ""
+    },
+    {
+      "name": "wealthfront",
+      "employer": "Wealthfront",
+      "ats": "lever",
+      "ok": true,
+      "count": 19,
+      "error": ""
+    },
+    {
+      "name": "experian",
+      "employer": "Experian",
+      "ats": "smartrecruiters",
+      "ok": true,
+      "count": 416,
+      "error": ""
+    },
+    {
+      "name": "capitalone",
+      "employer": "Capital One",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    },
+    {
+      "name": "keybank",
+      "employer": "KeyBank",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    },
+    {
+      "name": "mtb",
+      "employer": "M&T Bank",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    },
+    {
+      "name": "pnc",
+      "employer": "PNC",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    },
+    {
+      "name": "spglobal",
+      "employer": "S&P Global",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    },
+    {
+      "name": "synchrony",
+      "employer": "Synchrony",
+      "ats": "workday",
+      "ok": true,
+      "count": 26,
+      "error": ""
+    },
+    {
+      "name": "truist",
+      "employer": "Truist",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    },
+    {
+      "name": "wellsfargo",
+      "employer": "Wells Fargo",
+      "ats": "workday",
+      "ok": false,
+      "count": 0,
+      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+    }
+  ]
+}
