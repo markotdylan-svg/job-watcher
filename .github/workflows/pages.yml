@@ -7,6 +7,11 @@ on:
     workflows: ["Daily run"]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      include_data:
+        description: "Copy data/history.csv and data/status.json into the site"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -31,9 +36,12 @@ jobs:
         run: |
           mkdir -p _site/data
           cp -r site/. _site/
-          for f in history.csv status.json; do
-            if [ -f "data/$f" ]; then cp "data/$f" _site/data/; fi
-          done
+          if [ "${{ inputs.include_data }}" != "false" ]; then
+            for f in history.csv status.json; do
+              if [ -f "data/$f" ]; then cp "data/$f" _site/data/; fi
+            done
+          fi
+          ls -la _site _site/data
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
