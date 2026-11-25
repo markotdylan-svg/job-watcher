@@ -30,10 +30,14 @@ from .sources import SOURCES, Source
 from .status import make_status, write_status
 
 
-def fetch_one(src: Source) -> tuple[Source, dict | None, dict]:
+WORKDAY_TOTAL_BUDGET = 40 * 60  # seconds for all Workday boards together
+WORKDAY_BOARD_BUDGET = 10 * 60  # seconds for one Workday board
+
+
+def fetch_one(src: Source, **kwargs) -> tuple[Source, dict | None, dict]:
     t0 = time.monotonic()
     try:
-        raw = fetch_source(src)
+        raw = fetch_source(src, **kwargs)
         count = len(convert(raw))
         result = {"ok": True, "count": count, "error": ""}
     except Exception as e:  # one source failing must not stop the run
@@ -43,8 +47,20 @@ def fetch_one(src: Source) -> tuple[Source, dict | None, dict]:
     return src, raw, result
 
 
-def fetch_serially(sources: list[Source]) -> list[tuple]:
-    return [fetch_one(s) for s in sources]
+def fetch_serially(sources: list[Source], total_budget: float = WORKDAY_TOTAL_BUDGET) -> list[tuple]:
+    """Fetch Workday boards one after another within an overall time budget, so a
+    heavily throttled day can never run past the job's timeout and lose the commit.
+    A board that does not get its turn is recorded as failed (no raw file)."""
+    deadline = time.monotonic() + total_budget
+    out = []
+    for s in sources:
+        left = deadline - time.monotonic()
+        if left < 60:
+            out.append((s, None, {"ok": False, "count": 0, "error": "skipped: Workday time budget used up",
+                                  "name": s.name, "employer": s.employer, "ats": s.ats, "seconds": 0.0}))
+            continue
+        out.append(fetch_one(s, budget_seconds=min(WORKDAY_BOARD_BUDGET, left)))
+    return out
 
 
 def fetch_all(sources: list[Source], day_dir: Path) -> list[dict]:

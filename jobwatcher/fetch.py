@@ -50,7 +50,7 @@ def http_json(url: str, body: dict | None = None, retries: int = 6, headers: dic
                 raise
             retry_after = e.headers.get("Retry-After", "") if e.headers else ""
             if retry_after.isdigit():
-                time.sleep(min(120, int(retry_after)))
+                time.sleep(min(30, int(retry_after)))
                 continue
         except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
             last_err = e
@@ -99,7 +99,7 @@ def fetch_smartrecruiters(src: Source):
     return requests, pages
 
 
-def fetch_workday(src: Source, delay: float = 1.0, budget_seconds: float = 900):
+def fetch_workday(src: Source, delay: float = 1.0, budget_seconds: float = 600):
     """Page through a Workday board 20 postings at a time.
 
     Workday rate-limits hard, so the run fetches Workday boards one at a time
@@ -138,10 +138,11 @@ FETCHERS = {
 }
 
 
-def fetch_source(src: Source) -> dict:
-    """Fetch one source and return the raw record that gets saved to disk."""
+def fetch_source(src: Source, **kwargs) -> dict:
+    """Fetch one source and return the raw record that gets saved to disk.
+    Extra keyword arguments (e.g. budget_seconds) go to the ATS fetcher."""
     fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    requests, responses = FETCHERS[src.ats](src)
+    requests, responses = FETCHERS[src.ats](src, **kwargs)
     return {
         "source": src.name,
         "employer": src.employer,

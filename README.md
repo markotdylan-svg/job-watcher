@@ -117,8 +117,9 @@ term** (Workday `searchText` is empty). If a board ever grows past 5,000, set
 until the reported total is reached. Workday rate-limits hard (HTTP 429), so the
 Workday boards are fetched one after another with a pause between pages, retried
 with backoff, while the other sources are fetched in parallel. A board that is
-not finished within 15 minutes counts as failed for that day (no raw file), so it
-never causes false removals. The list API gives no department and only a relative
+not finished within 10 minutes, or that does not get its turn within the 40-minute
+budget for all Workday boards, counts as failed for that day (no raw file), so it
+never causes false removals and the run always finishes and commits. The list API gives no department and only a relative
 posting date ("Posted 3 Days Ago"), so `department` and `posted_date` are empty
 for Workday rows. Greenhouse also leaves `department` empty (it is only returned
 with the full job descriptions, which we do not download).
