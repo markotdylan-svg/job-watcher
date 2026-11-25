@@ -20,17 +20,20 @@ from pathlib import Path
 
 from .sources import Source
 
-USER_AGENT = "Mozilla/5.0 (compatible; job-watcher/1.0; class project)"
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/130.0 Safari/537.36 job-watcher/1.0")
 TIMEOUT = 45
 RETRY_CODES = {429, 500, 502, 503, 504}
 
 
-def http_json(url: str, body: dict | None = None, retries: int = 6) -> object:
+def http_json(url: str, body: dict | None = None, retries: int = 6, headers: dict | None = None) -> object:
     """GET (or POST when `body` is given) a URL and parse the JSON reply.
 
-    Retries rate-limit and server errors with exponential backoff.
+    Retries rate-limit and server errors with exponential backoff, honoring
+    a Retry-After header when the server sends one.
     """
-    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    extra = headers or {}
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json", "Accept-Language": "en-US", **extra}
     data = None
     if body is not None:
         data = json.dumps(body).encode()
@@ -45,9 +48,13 @@ def http_json(url: str, body: dict | None = None, retries: int = 6) -> object:
             last_err = e
             if e.code not in RETRY_CODES:
                 raise
+            retry_after = e.headers.get("Retry-After", "") if e.headers else ""
+            if retry_after.isdigit():
+                time.sleep(min(120, int(retry_after)))
+                continue
         except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
             last_err = e
-        time.sleep(min(60, 2 ** attempt + 1))
+        time.sleep(min(60, 2 ** (attempt + 1)))
     raise RuntimeError(f"gave up after {retries} attempts: {last_err}")
 
 
@@ -92,16 +99,23 @@ def fetch_smartrecruiters(src: Source):
     return requests, pages
 
 
-def fetch_workday(src: Source, delay: float = 0.6, budget_seconds: float = 900):
+def fetch_workday(src: Source, delay: float = 1.0, budget_seconds: float = 900):
+    """Page through a Workday board 20 postings at a time.
+
+    Workday rate-limits hard, so the run fetches Workday boards one at a time
+    (see run.py), waits `delay` seconds between pages, and sends the headers a
+    browser on the careers site would send.
+    """
     c = src.config
     url = f"https://{c['host']}/wday/cxs/{c['tenant']}/{c['site']}/jobs"
+    browser = {"Origin": f"https://{c['host']}", "Referer": f"https://{c['host']}/{c['site']}"}
     requests, pages, offset, limit, total = [], [], 0, 20, None
     deadline = time.monotonic() + budget_seconds
     while True:
         if time.monotonic() > deadline:
             raise TimeoutError(f"Workday board not finished after {budget_seconds:.0f}s (offset {offset} of {total})")
         body = {"limit": limit, "offset": offset, "searchText": src.search_text, "appliedFacets": {}}
-        resp = http_json(url, body)
+        resp = http_json(url, body, retries=8, headers=browser)
         if not isinstance(resp, dict) or "jobPostings" not in resp:
             raise ValueError("unexpected Workday response")
         if total is None:

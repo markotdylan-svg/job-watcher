@@ -43,17 +43,29 @@ def fetch_one(src: Source) -> tuple[Source, dict | None, dict]:
     return src, raw, result
 
 
+def fetch_serially(sources: list[Source]) -> list[tuple]:
+    return [fetch_one(s) for s in sources]
+
+
 def fetch_all(sources: list[Source], day_dir: Path) -> list[dict]:
+    """Fetch every source. Workday boards share rate limits, so they are fetched
+    one after another in one worker while the other sources run in parallel."""
     if day_dir.exists():
         shutil.rmtree(day_dir)  # a second run the same day replaces that day's raw files
-    results = []
+    workday = [s for s in sources if s.ats == "workday"]
+    others = [s for s in sources if s.ats != "workday"]
     with ThreadPoolExecutor(max_workers=8) as pool:
-        for src, raw, result in pool.map(fetch_one, sources):
-            if raw is not None:
-                write_raw(raw, day_dir / f"{src.name}.json.gz")
-            flag = "ok  " if result["ok"] else "FAIL"
-            print(f"{flag} {src.name:12} {result['count']:6} postings {result['seconds']:7.1f}s {result['error']}", flush=True)
-            results.append(result)
+        workday_future = pool.submit(fetch_serially, workday)
+        outcomes = list(pool.map(fetch_one, others)) + workday_future.result()
+    by_name = {src.name: (src, raw, result) for src, raw, result in outcomes}
+    results = []
+    for s in sources:  # keep the watch-list order in the log and the status file
+        src, raw, result = by_name[s.name]
+        if raw is not None:
+            write_raw(raw, day_dir / f"{src.name}.json.gz")
+        flag = "ok  " if result["ok"] else "FAIL"
+        print(f"{flag} {src.name:12} {result['count']:6} postings {result['seconds']:7.1f}s {result['error']}", flush=True)
+        results.append(result)
     return results
 
 
