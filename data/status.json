@@ -1,9 +1,9 @@
 {
-  "run_time": "2026-11-25T20:19:11Z",
+  "run_time": "2026-11-25T20:30:29Z",
   "run_date": "2026-11-25",
   "first_run_date": "2026-11-25",
   "days_with_success": 1,
-  "open": 3232,
+  "open": 10687,
   "new_today": 0,
   "removed_today": 0,
   "sources": [
@@ -44,7 +44,7 @@
       "employer": "Coinbase",
       "ats": "greenhouse",
       "ok": true,
-      "count": 245,
+      "count": 246,
       "error": ""
     },
     {
@@ -60,7 +60,7 @@
       "employer": "Figure",
       "ats": "greenhouse",
       "ok": true,
-      "count": 31,
+      "count": 30,
       "error": ""
     },
     {
@@ -92,7 +92,7 @@
       "employer": "Sezzle",
       "ats": "greenhouse",
       "ok": true,
-      "count": 220,
+      "count": 229,
       "error": ""
     },
     {
@@ -124,7 +124,7 @@
       "employer": "Ramp",
       "ats": "ashby",
       "ok": true,
-      "count": 182,
+      "count": 183,
       "error": ""
     },
     {
@@ -155,9 +155,9 @@
       "name": "capitalone",
       "employer": "Capital One",
       "ats": "workday",
-      "ok": false,
-      "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "count": 2053,
+      "error": ""
     },
     {
       "name": "keybank",
@@ -165,31 +165,31 @@
       "ats": "workday",
       "ok": false,
       "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "error": "RuntimeError: gave up after 8 attempts: HTTP Error 429: Too Many Requests"
     },
     {
       "name": "mtb",
       "employer": "M&T Bank",
       "ats": "workday",
-      "ok": false,
-      "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "count": 734,
+      "error": ""
     },
     {
       "name": "pnc",
       "employer": "PNC",
       "ats": "workday",
-      "ok": false,
-      "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "count": 1397,
+      "error": ""
     },
     {
       "name": "spglobal",
       "employer": "S&P Global",
       "ats": "workday",
-      "ok": false,
-      "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "count": 365,
+      "error": ""
     },
     {
       "name": "synchrony",
@@ -203,17 +203,17 @@
       "name": "truist",
       "employer": "Truist",
       "ats": "workday",
-      "ok": false,
-      "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "count": 1317,
+      "error": ""
     },
     {
       "name": "wellsfargo",
       "employer": "Wells Fargo",
       "ats": "workday",
-      "ok": false,
-      "count": 0,
-      "error": "RuntimeError: gave up after 6 attempts: HTTP Error 429: Too Many Requests"
+      "ok": true,
+      "count": 1579,
+      "error": ""
     }
   ]
 }
