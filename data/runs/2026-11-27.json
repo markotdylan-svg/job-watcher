@@ -1,0 +1,240 @@
+{
+  "run_time": "2026-11-27T21:58:50Z",
+  "run_date": "2026-11-27",
+  "sources": [
+    {
+      "ok": true,
+      "count": 218,
+      "error": "",
+      "name": "affirm",
+      "employer": "Affirm",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 183,
+      "error": "",
+      "name": "block",
+      "employer": "Block",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 266,
+      "error": "",
+      "name": "brex",
+      "employer": "Brex",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 76,
+      "error": "",
+      "name": "chime",
+      "employer": "Chime",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 256,
+      "error": "",
+      "name": "coinbase",
+      "employer": "Coinbase",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 35,
+      "error": "",
+      "name": "enova",
+      "employer": "Enova",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 30,
+      "error": "",
+      "name": "figure",
+      "employer": "Figure",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 67,
+      "error": "",
+      "name": "mercury",
+      "employer": "Mercury",
+      "ats": "greenhouse",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 39,
+      "error": "",
+      "name": "oportun",
+      "employer": "Oportun",
+      "ats": "greenhouse",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 161,
+      "error": "",
+      "name": "robinhood",
+      "employer": "Robinhood",
+      "ats": "greenhouse",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 223,
+      "error": "",
+      "name": "sezzle",
+      "employer": "Sezzle",
+      "ats": "greenhouse",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 57,
+      "error": "",
+      "name": "sofi",
+      "employer": "SoFi",
+      "ats": "greenhouse",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 771,
+      "error": "",
+      "name": "stripe",
+      "employer": "Stripe",
+      "ats": "greenhouse",
+      "seconds": 0.2
+    },
+    {
+      "ok": true,
+      "count": 74,
+      "error": "",
+      "name": "upstart",
+      "employer": "Upstart",
+      "ats": "greenhouse",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 183,
+      "error": "",
+      "name": "ramp",
+      "employer": "Ramp",
+      "ats": "ashby",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 144,
+      "error": "",
+      "name": "plaid",
+      "employer": "Plaid",
+      "ats": "ashby",
+      "seconds": 0.1
+    },
+    {
+      "ok": true,
+      "count": 19,
+      "error": "",
+      "name": "wealthfront",
+      "employer": "Wealthfront",
+      "ats": "lever",
+      "seconds": 0.5
+    },
+    {
+      "ok": true,
+      "count": 413,
+      "error": "",
+      "name": "experian",
+      "employer": "Experian",
+      "ats": "smartrecruiters",
+      "seconds": 2.5
+    },
+    {
+      "ok": true,
+      "count": 2053,
+      "error": "",
+      "name": "capitalone",
+      "employer": "Capital One",
+      "ats": "workday",
+      "seconds": 134.9
+    },
+    {
+      "ok": true,
+      "count": 614,
+      "error": "",
+      "name": "keybank",
+      "employer": "KeyBank",
+      "ats": "workday",
+      "seconds": 66.6
+    },
+    {
+      "ok": true,
+      "count": 723,
+      "error": "",
+      "name": "mtb",
+      "employer": "M&T Bank",
+      "ats": "workday",
+      "seconds": 71.7
+    },
+    {
+      "ok": true,
+      "count": 1528,
+      "error": "",
+      "name": "pnc",
+      "employer": "PNC",
+      "ats": "workday",
+      "seconds": 182.9
+    },
+    {
+      "ok": true,
+      "count": 357,
+      "error": "",
+      "name": "spglobal",
+      "employer": "S&P Global",
+      "ats": "workday",
+      "seconds": 30.6
+    },
+    {
+      "ok": true,
+      "count": 25,
+      "error": "",
+      "name": "synchrony",
+      "employer": "Synchrony",
+      "ats": "workday",
+      "seconds": 2.6
+    },
+    {
+      "ok": true,
+      "count": 1304,
+      "error": "",
+      "name": "truist",
+      "employer": "Truist",
+      "ats": "workday",
+      "seconds": 126.7
+    },
+    {
+      "ok": true,
+      "count": 1408,
+      "error": "",
+      "name": "wellsfargo",
+      "employer": "Wells Fargo",
+      "ats": "workday",
+      "seconds": 139.5
+    }
+  ]
+}
